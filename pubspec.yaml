@@ -1,0 +1,70 @@
+name: resturant
+description: Restaurant Billing Software
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # iOS style icons
+  cupertino_icons: ^1.0.8
+
+  # ================= UI & STATE =================
+  provider: ^6.0.5
+  fl_chart: ^1.1.1
+
+  # ================= PDF / PRINT =================
+  pdf: ^3.10.6
+  printing: ^5.11.0
+
+  # ================= MEDIA =================
+  image_picker: ^1.0.7
+
+  # ================= LOCAL STORAGE (WEB + MOBILE) =================
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # ================= MOBILE DATABASE =================
+  sqflite: ^2.3.0
+  path: ^1.9.0
+  path_provider: ^2.1.2
+  sqflite_common_ffi: ^2.3.3
+  mailer: ^6.0.1
+  http: ^1.2.0
+  connectivity_plus: ^7.0.0
+  uuid: ^4.3.3
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.0.0
+
+
+
+  # ================= WEB OFFLINE (IndexedDB) =================
+  idb_shim: ^2.3.0
+  shared_preferences: ^2.2.2
+  synchronized: ^3.1.0
+
+
+  
+
+
+  # ================= NETWORK =================
+  dio: ^5.4.0
+  esc_pos_utils_plus: ^2.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.8
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
