@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/product_provider.dart';
 import '../providers/category_provider.dart';
-import '../services/api_service.dart';
 import '../models/product.dart';
 
 class CustomerMenuScreen extends StatefulWidget {
@@ -21,8 +20,8 @@ class _CustomerMenuScreenState extends State<CustomerMenuScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
-      context.read<ProductProvider>().fetchProducts();
-      context.read<CategoryProvider>().fetchCategories();
+      context.read<ProductProvider>().loadProducts();
+      context.read<CategoryProvider>().loadCategories();
     });
   }
 
@@ -52,7 +51,7 @@ class _CustomerMenuScreenState extends State<CustomerMenuScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFF6A00),
         elevation: 0,
-        title: const Text('FlavorFlow Restaurant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const Text('FlavorFlow Restaurant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
         actions: [
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -61,7 +60,7 @@ class _CustomerMenuScreenState extends State<CustomerMenuScreen> {
               color: Colors.black26,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Center(child: Text('📍 ${widget.tableNo}', style: const TextStyle(fontWeight: FontWeight.bold))),
+            child: Center(child: Text('📍 ${widget.tableNo}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
           ),
         ],
       ),
@@ -76,7 +75,7 @@ class _CustomerMenuScreenState extends State<CustomerMenuScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 _buildCategoryChip('All'),
-                ...categories.map((c) => _buildCategoryChip(c['name'])),
+                ...categories.map((c) => _buildCategoryChip(c.name)),
               ],
             ),
           ),
@@ -116,9 +115,9 @@ class _CustomerMenuScreenState extends State<CustomerMenuScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('${cart.length} Items - Place Order', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text('${cart.length} Items - Place Order', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                     const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward_rounded),
+                    const Icon(Icons.arrow_forward_rounded, color: Colors.white),
                   ],
                 ),
               ),
