@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -23,7 +22,7 @@ class _ProductAddScreenState extends State<ProductAddScreen> {
 
   String selectedCategory = "";
   Product? editingProduct;
-  File? pickedFile;
+  dynamic pickedFile;
   Uint8List? webImageBytes;
   bool _isSaving = false;
   final picker = ImagePicker();
@@ -37,16 +36,13 @@ class _ProductAddScreenState extends State<ProductAddScreen> {
   Future<void> pickImage() async {
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
-    if (kIsWeb) {
-      webImageBytes = await picked.readAsBytes();
-    } else {
-      pickedFile = File(picked.path);
-    }
+    webImageBytes = await picked.readAsBytes();
     setState(() {});
   }
 
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
+    if (selectedCategory.isEmpty) return;
 
     setState(() => _isSaving = true);
 
@@ -56,7 +52,6 @@ class _ProductAddScreenState extends State<ProductAddScreen> {
         name: _nameCtrl.text.trim(),
         price: double.parse(_priceCtrl.text),
         category: selectedCategory,
-        // The image path in the model is less important now as the server will provide the URL
         image: editingProduct?.image ?? "assets/images/user.png",
       );
 
@@ -66,13 +61,11 @@ class _ProductAddScreenState extends State<ProductAddScreen> {
       if (editingProduct == null) {
         success = await provider.addProduct(
           product,
-          imageFile: pickedFile,
           imageBytes: webImageBytes,
         );
       } else {
         success = await provider.updateProduct(
           product,
-          imageFile: pickedFile,
           imageBytes: webImageBytes,
         );
       }

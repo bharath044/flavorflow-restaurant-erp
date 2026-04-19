@@ -17,8 +17,8 @@ class WebOrder {
     required this.items,
     this.note = '',
     this.status = 'pending',
-    required this.customerName, // 🔥 NEW
-    required this.customerPhone, // 🔥 NEW
+    this.customerName = 'Guest',
+    this.customerPhone = '',
     required this.createdAt,
   });
 

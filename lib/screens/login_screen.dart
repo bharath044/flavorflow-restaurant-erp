@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../services/auth_provider.dart';
 import '../models/user_role.dart';
-import '../main.dart';
+import 'root_router.dart';
 import '../utils/responsive_helper.dart';
 
 class LoginScreen extends StatefulWidget {

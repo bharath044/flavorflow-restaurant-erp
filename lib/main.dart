@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'services/server_config.dart';
 import 'services/api_service.dart';
@@ -12,9 +12,8 @@ import 'providers/order_provider.dart';
 import 'providers/kitchen_provider.dart';
 import 'providers/expense_provider.dart';
 import 'providers/inventory_provider.dart';
-import 'providers/invoice_provider.dart';
-import 'providers/dashboard_provider.dart';
-import 'providers/auth_provider.dart' as app_auth;
+import 'services/invoice_provider.dart';
+import 'services/auth_provider.dart' as app_auth;
 
 import 'screens/role_select_screen.dart';
 import 'screens/customer_menu_screen.dart';
@@ -22,17 +21,17 @@ import 'screens/customer_menu_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase
+  // 1. Init Hive (REQUIRED for AuthProvider)
+  await Hive.initFlutter();
+  await Hive.openBox('auth');
+
+  // 2. Init Supabase
   await Supabase.initialize(
     url: ServerConfig.supabaseUrl,
     anonKey: ServerConfig.supabaseAnonKey,
   );
 
-  runZonedGuarded(() async {
-    runApp(const MyApp());
-  }, (error, stack) {
-    debugPrint('Global Error: $error');
-  });
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -50,7 +49,6 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ExpenseProvider()),
         ChangeNotifierProvider(create: (_) => InventoryProvider()),
         ChangeNotifierProvider(create: (_) => InvoiceProvider()),
-        ChangeNotifierProvider(create: (_) => DashboardProvider()),
       ],
       child: MaterialApp(
         title: 'FlavorFlow Restaurant',
@@ -62,7 +60,7 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         onGenerateRoute: (settings) {
-          // Handle dynamic QR Menu routing: /menu/T12
+          // 🚀 Handle Customer Menu /menu/T1
           if (settings.name != null && settings.name!.startsWith('/menu/')) {
             final tableNo = settings.name!.replaceFirst('/menu/', '');
             return MaterialPageRoute(
@@ -71,7 +69,7 @@ class MyApp extends StatelessWidget {
             );
           }
           
-          // Default Route
+          // 🚀 Admin / Staff Entry
           return MaterialPageRoute(
             builder: (context) => const RoleSelectScreen(),
             settings: settings,
