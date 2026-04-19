@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "public": true,
+  "name": "flavorflow-restaurant-erp",
+  "rewrites": [
+    { "source": "/menu/(.*)", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

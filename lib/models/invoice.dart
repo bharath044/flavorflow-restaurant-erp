@@ -13,6 +13,9 @@ class Invoice {
   /// 💰 Bill total
   final double total;
 
+  /// 📊 GST Amount
+  final double gstAmount;
+
   /// 💳 Cash / Online / UPI etc.
   final String paymentMode;
 
@@ -36,6 +39,7 @@ class Invoice {
     required this.date,
     required this.total,
     required this.paymentMode,
+    this.gstAmount = 0,
     this.items = const [],
     this.syncStatus = 'PENDING',
     int? createdAt,
@@ -49,6 +53,7 @@ class Invoice {
   // 🔥 ADD ONLY — compatibility getter
   // ======================================================
   String get invoiceNo => id;
+  double get totalAmount => total;
 
   // ======================================================
   // 🔁 COPY WITH
@@ -63,6 +68,7 @@ class Invoice {
       date: date,
       total: total,
       paymentMode: paymentMode,
+      gstAmount: gstAmount,
       items: items,
       syncStatus: syncStatus ?? this.syncStatus,
       createdAt: createdAt,
@@ -80,6 +86,7 @@ class Invoice {
       'device_id': deviceId,
       'date': date.millisecondsSinceEpoch,
       'total': total,
+      'gst_amount': gstAmount,
       'payment_mode': paymentMode,
       'items': jsonEncode(items),
       'sync_status': syncStatus,
@@ -97,6 +104,7 @@ class Invoice {
       deviceId: map['device_id'],
       date: DateTime.fromMillisecondsSinceEpoch(map['date']),
       total: (map['total'] as num).toDouble(),
+      gstAmount: (map['gst_amount'] as num?)?.toDouble() ?? 0,
       paymentMode: map['payment_mode'],
       items: map['items'] != null && map['items'].toString().isNotEmpty
           ? List<Map<String, dynamic>>.from(
@@ -118,6 +126,7 @@ class Invoice {
       'device_id': deviceId,
       'date': date.toIso8601String(),
       'total': total,
+      'gst_amount': gstAmount,
       'payment_mode': paymentMode,
       'items': items,
       'sync_status': syncStatus,
@@ -126,8 +135,6 @@ class Invoice {
     };
   }
 
-  // ======================================================
-  // 🌐 FROM API / WEBSOCKET JSON
   // ======================================================
   // 🌐 FROM API / WEBSOCKET JSON
   // ======================================================
@@ -147,6 +154,7 @@ class Invoice {
       deviceId: json['device_id'] ?? 'UNKNOWN',
       date: DateTime.parse(json['date']),
       total: (json['total'] as num).toDouble(),
+      gstAmount: (json['gst_amount'] as num?)?.toDouble() ?? 0,
       paymentMode: json['payment_mode'] ?? 'CASH',
       items: json['items'] != null
           ? List<Map<String, dynamic>>.from(json['items'])

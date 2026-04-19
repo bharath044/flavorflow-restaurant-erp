@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'utils/platform_check.dart';
 import 'services/auth_provider.dart';
@@ -37,9 +37,12 @@ Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // 1. SERVER CONFIG INIT
-    await ServerConfig.loadIp();
-    debugPrint('✅ Server Config loaded: ${ServerConfig.baseUrl}');
+    // 1. SUPABASE INIT
+    await Supabase.initialize(
+      url: ServerConfig.supabaseUrl,
+      anonKey: ServerConfig.supabaseAnonKey,
+    );
+    debugPrint('✅ Supabase initialized');
 
     // 2. HIVE INIT
     await Hive.initFlutter();
