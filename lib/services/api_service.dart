@@ -1,10 +1,12 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/product.dart';
 import '../models/table_order.dart';
 import '../models/invoice.dart';
+
+// 🚀 NOTE: We avoid dart:io to prevent Flutter Web compilation errors.
+// All file handling is done via Uint8List for platform-agnostic image support.
 
 class ApiService {
   static final _supabase = Supabase.instance.client;
@@ -105,11 +107,11 @@ class ApiService {
 
   static Future<List<Product>> getPublicProducts() => getProducts();
 
-  static Future<bool> createProduct(Map<String, dynamic> data, {File? imageFile, Uint8List? imageBytes}) async {
+  static Future<bool> createProduct(Map<String, dynamic> data, {dynamic imageFile, Uint8List? imageBytes}) async {
     try {
       String? imageUrl;
-      if (imageFile != null || imageBytes != null) {
-        imageUrl = await _uploadImage(imageFile, imageBytes);
+      if (imageBytes != null) {
+        imageUrl = await _uploadImage(imageBytes);
       }
       await _supabase.from('products').insert({
         'id': data['id'],
@@ -128,11 +130,11 @@ class ApiService {
     }
   }
 
-  static Future<bool> updateProductMetadata(String id, Map<String, dynamic> data, {File? imageFile, Uint8List? imageBytes}) async {
+  static Future<bool> updateProductMetadata(String id, Map<String, dynamic> data, {dynamic imageFile, Uint8List? imageBytes}) async {
     try {
       String? imageUrl;
-      if (imageFile != null || imageBytes != null) {
-        imageUrl = await _uploadImage(imageFile, imageBytes);
+      if (imageBytes != null) {
+        imageUrl = await _uploadImage(imageBytes);
       }
       await _supabase.from('products').update({
         'name': data['name'],
@@ -160,14 +162,10 @@ class ApiService {
     }
   }
 
-  static Future<String?> _uploadImage(File? file, Uint8List? bytes) async {
+  static Future<String?> _uploadImage(Uint8List bytes) async {
     try {
       final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      if (file != null) {
-        await _supabase.storage.from('product-images').upload(fileName, file);
-      } else if (bytes != null) {
-        await _supabase.storage.from('product-images').uploadBinary(fileName, bytes);
-      }
+      await _supabase.storage.from('product-images').uploadBinary(fileName, bytes);
       return _supabase.storage.from('product-images').getPublicUrl(fileName);
     } catch (e) {
       debugPrint('Error uploading image: $e');
