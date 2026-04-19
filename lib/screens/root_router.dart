@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_provider.dart';
 import '../models/user_role.dart';
-import 'admin_dashboard_screen.dart';
-import 'server_table_screen.dart';
-import 'kitchen_screen.dart';
+import 'web_orders_screen.dart';
 import 'role_select_screen.dart';
 
 class RootRouter extends StatelessWidget {
@@ -20,7 +18,7 @@ class RootRouter extends StatelessWidget {
 
     switch (auth.role) {
       case UserRole.admin:
-        return const AdminDashboardScreen();
+        return const WebOrdersScreen();
       case UserRole.server:
       case UserRole.staff:
         return const ServerTableScreen();

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/order_provider.dart';
 import '../models/web_order.dart';
 import '../models/cart_item.dart';
+import 'admin_dashboard_screen.dart';
 import 'billing_screen.dart';
 
 // ─── DESIGN TOKENS ──────────────────────────────────────────────────────────
@@ -290,6 +291,14 @@ class _WebOrdersScreenState extends State<WebOrdersScreen> {
         ],
       ),
       actions: [
+        IconButton(
+          tooltip: 'Admin Dashboard',
+          icon: const Icon(Icons.dashboard_customize_outlined, color: Colors.white54),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+          ),
+        ),
         IconButton(
           tooltip: 'Refresh',
           icon: const Icon(Icons.refresh_rounded, color: Colors.white54),
