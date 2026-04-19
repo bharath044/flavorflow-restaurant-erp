@@ -40,26 +40,6 @@ class ApiService {
     }
   }
 
-  static Future<bool> updateInvoice(String id, Map<String, dynamic> data) async {
-    try {
-      await _supabase.from('invoices').update({'data': data}).eq('id', id);
-      return true;
-    } catch (e) {
-      debugPrint('Error updating invoice: $e');
-      return false;
-    }
-  }
-
-  static Future<bool> deleteInvoice(String id) async {
-    try {
-      await _supabase.from('invoices').delete().eq('id', id);
-      return true;
-    } catch (e) {
-      debugPrint('Error deleting invoice: $e');
-      return false;
-    }
-  }
-
   static Future<double> getTodaySales() async {
     try {
       final today = DateTime.now().toIso8601String().split('T')[0];
@@ -97,7 +77,11 @@ class ApiService {
   static Future<List<Product>> getProducts() async {
     try {
       final response = await _supabase.from('products').select().order('name');
-      return (response as List).map((p) => Product.fromMap(p)).toList();
+      return (response as List).map((p) => Product.fromMap({
+        ...p,
+        'isAvailable': p['is_available'],
+        'image': p['image_url'],
+      })).toList();
     } catch (e) {
       debugPrint('Error getting products: $e');
       return [];
@@ -105,16 +89,6 @@ class ApiService {
   }
 
   static Future<List<Product>> getPublicProducts() => getProducts();
-
-  static Future<List<Map<String, dynamic>>> getCategories() async {
-    try {
-      final response = await _supabase.from('categories').select();
-      return List<Map<String, dynamic>>.from(response as List);
-    } catch (e) {
-      debugPrint('Error getting categories: $e');
-      return [];
-    }
-  }
 
   static Future<bool> createProduct(Map<String, dynamic> data, {File? imageFile, Uint8List? imageBytes}) async {
     try {
@@ -124,8 +98,14 @@ class ApiService {
       }
 
       await _supabase.from('products').insert({
-        ...data,
-        'image_url': imageUrl,
+        'id': data['id'],
+        'name': data['name'],
+        'price': data['price'],
+        'category': data['category'],
+        'image_url': imageUrl ?? data['image'],
+        'quantity': data['quantity'] ?? 0,
+        'is_available': data['isAvailable'] ?? true,
+        'description': data['description'] ?? '',
       });
       return true;
     } catch (e) {
@@ -141,10 +121,15 @@ class ApiService {
         imageUrl = await _uploadImage(imageFile, imageBytes);
       }
 
-      final updateData = {...data};
-      if (imageUrl != null) updateData['image_url'] = imageUrl;
-
-      await _supabase.from('products').update(updateData).eq('id', id);
+      await _supabase.from('products').update({
+        'name': data['name'],
+        'price': data['price'],
+        'category': data['category'],
+        'image_url': imageUrl ?? data['image'],
+        'quantity': data['quantity'] ?? 0,
+        'is_available': data['isAvailable'] ?? true,
+        'description': data['description'] ?? '',
+      }).eq('id', id);
       return true;
     } catch (e) {
       debugPrint('Error updating product: $e');
@@ -165,7 +150,7 @@ class ApiService {
   static Future<String?> _uploadImage(File? file, Uint8List? bytes) async {
     try {
       final fileName = 'product_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final path = 'public/$fileName';
+      final path = fileName;
       
       if (file != null) {
         await _supabase.storage.from('product-images').upload(path, file);
@@ -177,58 +162,6 @@ class ApiService {
     } catch (e) {
       debugPrint('Error uploading image: $e');
       return null;
-    }
-  }
-
-  // ─── ORDERS ────────────────────────────────────────────────
-  static Future<TableOrder?> getOrderForTable(String tableNo) async {
-    try {
-      final response = await _supabase.from('table_orders').select().eq('table_no', tableNo).maybeSingle();
-      if (response == null) return null;
-      return TableOrder.fromMap(response);
-    } catch (e) {
-      debugPrint('Error getting order: $e');
-      return null;
-    }
-  }
-
-  static Future<bool> upsertOrder(TableOrder order) async {
-    try {
-      await _supabase.from('table_orders').upsert(order.toMap(), onConflict: 'table_no');
-      return true;
-    } catch (e) {
-      debugPrint('Error upserting order: $e');
-      return false;
-    }
-  }
-
-  static Future<List<TableOrder>> getActiveOrders() async {
-    try {
-      final response = await _supabase.from('table_orders').select().neq('status', 'billed');
-      return (response as List).map((o) => TableOrder.fromMap(o)).toList();
-    } catch (e) {
-      debugPrint('Error getting active orders: $e');
-      return [];
-    }
-  }
-
-  static Future<bool> updateOrderStatus(String tableNo, String status) async {
-    try {
-      await _supabase.from('table_orders').update({'status': status}).eq('table_no', tableNo);
-      return true;
-    } catch (e) {
-      debugPrint('Error updating order status: $e');
-      return false;
-    }
-  }
-
-  static Future<bool> clearTableOrder(String tableNo) async {
-    try {
-      await _supabase.from('table_orders').delete().eq('table_no', tableNo);
-      return true;
-    } catch (e) {
-      debugPrint('Error clearing table order: $e');
-      return false;
     }
   }
 
@@ -264,11 +197,40 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> getQrForTable(String tableNo) async {
-    // Note: Since we don't have a backend to generate QR strings, we return a mock URL
-    // for CustomerOrderScreen web orientation
     return {
-      'url': 'https://flavorflow.vercel.app/menu/$tableNo',
+      'url': 'https://flavorflow-restaurant-erp.vercel.app/menu/$tableNo',
     };
+  }
+
+  // ─── CATEGORIES ───────────────────────────────────────────
+  static Future<List<Map<String, dynamic>>> getCategories() async {
+    try {
+      final response = await _supabase.from('categories').select();
+      return List<Map<String, dynamic>>.from(response as List);
+    } catch (e) {
+      debugPrint('Error getting categories: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> addCategory(String name) async {
+    try {
+      await _supabase.from('categories').insert({'name': name});
+      return true;
+    } catch (e) {
+      debugPrint('Error adding category: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> deleteCategory(String name) async {
+    try {
+      await _supabase.from('categories').delete().eq('name', name);
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting category: $e');
+      return false;
+    }
   }
 
   // ─── WEB ORDERS (CUSTOMER MENU) ─────────────────────────
@@ -327,16 +289,6 @@ class ApiService {
     }
   }
 
-  static Future<bool> updateCustomerOrder({required int id, required List<Map<String, dynamic>> items, String note = ''}) async {
-    try {
-      await _supabase.from('customer_orders').update({'items': items, 'note': note}).eq('id', id);
-      return true;
-    } catch (e) {
-      debugPrint('Error updating customer order: $e');
-      return false;
-    }
-  }
-
   // ─── EXPENSES ───────────────────────────────────────────
   static Future<List<Map<String, dynamic>>> getExpenses() async {
     try {
@@ -368,66 +320,6 @@ class ApiService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> getRecurringExpenses() async {
-    try {
-      final response = await _supabase.from('recurring_expenses').select();
-      return List<Map<String, dynamic>>.from(response as List);
-    } catch (e) {
-      debugPrint('Error getting recurring: $e');
-      return [];
-    }
-  }
-
-  static Future<bool> saveRecurringExpense(Map<String, dynamic> data) async {
-    try {
-      await _supabase.from('recurring_expenses').upsert(data);
-      return true;
-    } catch (e) {
-      debugPrint('Error saving recurring: $e');
-      return false;
-    }
-  }
-
-  static Future<bool> deleteRecurringExpense(String id) async {
-    try {
-      await _supabase.from('recurring_expenses').delete().eq('id', id);
-      return true;
-    } catch (e) {
-      debugPrint('Error deleting recurring: $e');
-      return false;
-    }
-  }
-
-  static Future<List<Map<String, dynamic>>> getSupplierPayments() async {
-    try {
-      final response = await _supabase.from('supplier_payments').select();
-      return List<Map<String, dynamic>>.from(response as List);
-    } catch (e) {
-      debugPrint('Error getting supplier payments: $e');
-      return [];
-    }
-  }
-
-  static Future<bool> saveSupplierPayment(Map<String, dynamic> data) async {
-    try {
-      await _supabase.from('supplier_payments').upsert(data);
-      return true;
-    } catch (e) {
-      debugPrint('Error saving supplier payment: $e');
-      return false;
-    }
-  }
-
-  static Future<bool> deleteSupplierPayment(String id) async {
-    try {
-      await _supabase.from('supplier_payments').delete().eq('id', id);
-      return true;
-    } catch (e) {
-      debugPrint('Error deleting supplier payment: $e');
-      return false;
-    }
-  }
-
   // ─── INVENTORY ──────────────────────────────────────────
   static Future<List<Map<String, dynamic>>> getRawMaterials() async {
     try {
@@ -455,94 +347,6 @@ class ApiService {
       return true;
     } catch (e) {
       debugPrint('Error deleting material: $e');
-      return false;
-    }
-  }
-
-  static Future<List<Map<String, dynamic>>> getInventoryHistory(String type) async {
-    try {
-      final table = type == 'stock_in' ? 'inventory_stock_in' : (type == 'wastage' ? 'inventory_wastage' : 'inventory_adjustments');
-      final response = await _supabase.from(table).select();
-      return List<Map<String, dynamic>>.from(response as List);
-    } catch (e) {
-      debugPrint('Error getting inventory history: $e');
-      return [];
-    }
-  }
-
-  static Future<bool> saveInventoryHistory(String type, Map<String, dynamic> data) async {
-    try {
-      final table = type == 'stock_in' ? 'inventory_stock_in' : (type == 'wastage' ? 'inventory_wastage' : 'inventory_adjustments');
-      await _supabase.from(table).upsert(data);
-      return true;
-    } catch (e) {
-      debugPrint('Error saving inventory history: $e');
-      return false;
-    }
-  }
-
-  static Future<bool> deleteInventoryHistory(String type, String id) async {
-    try {
-      final table = type == 'stock_in' ? 'inventory_stock_in' : (type == 'wastage' ? 'inventory_wastage' : 'inventory_adjustments');
-      await _supabase.from(table).delete().eq('id', id);
-      return true;
-    } catch (e) {
-      debugPrint('Error deleting inventory history: $e');
-      return false;
-    }
-  }
-
-  static Future<bool> recordInventoryTransaction(String materialId, double quantity, String type) async {
-    try {
-      await _supabase.rpc('update_stock', params: {'mat_id': materialId, 'qty': quantity, 'type': type});
-      return true;
-    } catch (e) {
-      debugPrint('Error recording transaction: $e');
-      return false;
-    }
-  }
-
-  // ─── RECIPES ───────────────────────────────────────────
-  static Future<List<Map<String, dynamic>>> getRecipes() async {
-    try {
-      final response = await _supabase.from('recipes').select();
-      return List<Map<String, dynamic>>.from(response as List);
-    } catch (e) {
-      debugPrint('Error getting recipes: $e');
-      return [];
-    }
-  }
-
-  static Future<bool> saveRecipe(Map<String, dynamic> data) async {
-    try {
-      await _supabase.from('recipes').upsert(data);
-      return true;
-    } catch (e) {
-      debugPrint('Error saving recipe: $e');
-      return false;
-    }
-  }
-
-  static Future<bool> deleteRecipe(String productId, String materialId) async {
-    try {
-      await _supabase.from('recipes').delete().match({'product_id': productId, 'material_id': materialId});
-      return true;
-    } catch (e) {
-      debugPrint('Error deleting recipe: $e');
-      return false;
-    }
-  }
-
-  // ─── KITCHEN SYNC ─────────────────────────────────────
-  static Future<bool> syncKitchenStock(String productId, int quantity, bool isAvailable, [String? session]) async {
-    try {
-      await _supabase.from('products').update({
-        'quantity': quantity,
-        'is_available': isAvailable,
-      }).eq('id', productId);
-      return true;
-    } catch (e) {
-      debugPrint('Error syncing kitchen stock: $e');
       return false;
     }
   }

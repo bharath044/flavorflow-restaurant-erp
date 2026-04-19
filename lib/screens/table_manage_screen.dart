@@ -99,8 +99,8 @@ class _TableManageScreenState extends State<TableManageScreen> {
 
     if (!mounted) return;
 
-    if (data.containsKey('qr')) {
-      final String base64Image = data['qr'].split(',').last;
+    if (data.containsKey('url')) {
+      final String qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${Uri.encodeComponent(data['url'])}";
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -115,13 +115,19 @@ class _TableManageScreenState extends State<TableManageScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Image.memory(base64Decode(base64Image), width: 250, height: 250),
+                child: Image.network(qrUrl, width: 250, height: 250),
               ),
               const SizedBox(height: 16),
               Text(
                 'Scan this to open Web Menu for $tableNo',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              SelectableText(
+                data['url'],
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFFFF6A00), fontSize: 10),
               ),
             ],
           ),
@@ -208,8 +214,8 @@ class _TableManageScreenState extends State<TableManageScreen> {
                             ),
                             itemCount: _tables.length,
                             itemBuilder: (ctx, i) {
-                              final t = _tables[i];
-                              final no = t['tableNo'];
+                               final t = _tables[i];
+                               final no = t['table_no']?.toString() ?? 'Unknown';
                               return Container(
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF1A1A1A),
