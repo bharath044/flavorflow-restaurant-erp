@@ -40,6 +40,26 @@ class ApiService {
     }
   }
 
+  static Future<bool> updateInvoice(String id, Map<String, dynamic> data) async {
+    try {
+      await _supabase.from('invoices').update({'data': data}).eq('id', id);
+      return true;
+    } catch (e) {
+      debugPrint('Error updating invoice: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> deleteInvoice(String id) async {
+    try {
+      await _supabase.from('invoices').delete().eq('id', id);
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting invoice: $e');
+      return false;
+    }
+  }
+
   static Future<double> getTodaySales() async {
     try {
       final today = DateTime.now().toIso8601String().split('T')[0];
@@ -233,12 +253,54 @@ class ApiService {
     }
   }
 
+  // ─── ORDERS ────────────────────────────────────────────────
+  static Future<TableOrder?> getOrderForTable(String tableNo) async {
+    try {
+      final response = await _supabase.from('table_orders').select().eq('table_no', tableNo).maybeSingle();
+      if (response == null) return null;
+      return TableOrder.fromMap(response);
+    } catch (e) {
+      debugPrint('Error getting order: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> upsertOrder(TableOrder order) async {
+    try {
+      await _supabase.from('table_orders').upsert(order.toMap(), onConflict: 'table_no');
+      return true;
+    } catch (e) {
+      debugPrint('Error upserting order: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> updateOrderStatus(String tableNo, String status) async {
+    try {
+      await _supabase.from('table_orders').update({'status': status}).eq('table_no', tableNo);
+      return true;
+    } catch (e) {
+      debugPrint('Error updating order status: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> clearTableOrder(String tableNo) async {
+    try {
+      await _supabase.from('table_orders').delete().eq('table_no', tableNo);
+      return true;
+    } catch (e) {
+      debugPrint('Error clearing table order: $e');
+      return false;
+    }
+  }
+
   // ─── WEB ORDERS (CUSTOMER MENU) ─────────────────────────
   static Future<int> placeCustomerOrder({
     required String tableNo,
-    required String customerName,
-    required String customerPhone,
     required List<Map<String, dynamic>> items,
+    String customerName = 'Guest',
+    String customerPhone = '',
     String note = '',
   }) async {
     try {
@@ -285,6 +347,23 @@ class ApiService {
       return true;
     } catch (e) {
       debugPrint('Error cancelling customer order: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> updateCustomerOrder({
+    required int id, 
+    required List<Map<String, dynamic>> items, 
+    String note = ''
+  }) async {
+    try {
+      await _supabase.from('customer_orders').update({
+        'items': items,
+        'note': note,
+      }).eq('id', id);
+      return true;
+    } catch (e) {
+      debugPrint('Error updating customer order: $e');
       return false;
     }
   }
